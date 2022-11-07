@@ -1,0 +1,5 @@
+name: Bundle Subclass IDE Helper
+type: module
+description: Provides entity bundle subclass field properties.
+package: Custom
+core_version_requirement: ^9 || ^10

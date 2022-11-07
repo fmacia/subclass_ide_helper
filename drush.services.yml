@@ -1,0 +1,10 @@
+services:
+  subclass_ide_helper.commands:
+    class: \Drupal\subclass_ide_helper\Commands\SubclassIdeHelperCommands
+    arguments:
+      - '@entity_type.bundle.info'
+      - '@file_system'
+      - '@typed_data_manager'
+      - '@entity_field.manager'
+    tags:
+      - { name: drush.command }

@@ -1,0 +1,15 @@
+{
+    "name": "drupal/subclass_ide_helper",
+    "description": "Provides entity bundle subclass field properties.",
+    "license": "GPL-2.0-or-later",
+    "type": "drupal-module",
+    "authors": [
+        {
+            "name": "Fran Macía",
+            "email": "fj.macia.espin@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1"
+    }
+}
