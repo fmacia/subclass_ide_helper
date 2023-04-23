@@ -39,9 +39,15 @@ class SubclassIdeHelperCommands extends DrushCommands {
    */
   public function generateBundleProperties(
     $entity_types = 'node',
-    $options = ['result-file' => NULL]
+    $options = [
+      'result-file' => NULL,
+      'excluded-classes' => '',
+    ]
   ): void {
-    $properties = $this->generateFieldProperties($entity_types);
+    $properties = $this->generateFieldProperties(
+      $this->splitString($entity_types),
+      $this->splitString($options['excluded-classes']),
+    );
 
     // Render directly with twig to prevent debug html comments.
     $output = $this->twig->loadTemplate('subclass-ide-helper.html.twig')->render(['namespaces' => $properties]);
@@ -52,9 +58,9 @@ class SubclassIdeHelperCommands extends DrushCommands {
   /**
    * Generate the field properties for each subclassed bundle.
    */
-  protected function generateFieldProperties(string $entity_types): array {
+  protected function generateFieldProperties(array $entity_types, array $excluded_classes): array {
     $namespaces = [];
-    foreach ($this->splitEntityTypes($entity_types) as $entity_type) {
+    foreach ($entity_types as $entity_type) {
       $bundles = $this->entityTypeBundleInfo->getBundleInfo($entity_type);
       foreach ($bundles as $bundle_name => $bundle) {
         if (empty($bundle['class'])) {
@@ -63,6 +69,10 @@ class SubclassIdeHelperCommands extends DrushCommands {
 
         $class_array = explode('\\', $bundle['class']);
         $class_name = array_pop($class_array);
+        if (in_array($class_name, $excluded_classes)) {
+          continue;
+        }
+
         $namespace = implode('\\', $class_array);
 
         $field_definitions = $this->entityFieldManager->getFieldDefinitions($entity_type, $bundle_name);
@@ -86,13 +96,10 @@ class SubclassIdeHelperCommands extends DrushCommands {
   }
 
   /**
-   * Splits the entity types string.
+   * Splits a string.
    */
-  protected function splitEntityTypes(string $entity_types_string): array {
-    return array_map(
-      'trim',
-      explode(',', $entity_types_string)
-    );
+  protected function splitString(string $string): array {
+    return array_map('trim', explode(',', $string));
   }
 
   /**

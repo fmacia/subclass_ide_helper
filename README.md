@@ -20,13 +20,13 @@ drush en -y subclass_ide_helper
 The ide helper file can be generated using the following command:
 
 ```
-drush subclass_ide_helper:generate [entity,types] [--result-file=/foo/bar]
+drush subclass_ide_helper:generate [entity,types] [--result-file=/foo/bar] [--excluded-classes=ClassName,AnotherClassName]
 ```
 
 Or using the alias:
 
 ```
-drush sih [entity,types] [--result-file=/foo/bar]
+drush sih [entity,types] [--result-file=/foo/bar] [--excluded-classes=ClassName,AnotherClassName]
 ```
 
 ### Specific entity types
@@ -43,4 +43,12 @@ By default, the file is created at the project root. The path and filename can b
 
 ```
 drush subclass_ide_helper:generate --result-file=/foo/bar
+```
+
+### Excluded classes
+
+To exclude a class (example, if there is a base node class extending the original for all nodes except for some):
+
+```
+drush subclass_ide_helper:generate --excluded-classes=ClassName,AnotherClassName
 ```
