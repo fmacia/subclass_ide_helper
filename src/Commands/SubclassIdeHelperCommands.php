@@ -10,6 +10,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\TypedData\TypedDataManagerInterface;
 use Drupal\field\FieldConfigInterface;
 use Drush\Commands\DrushCommands;
+use Twig\Environment;
 
 /**
  * A Drush commandfile.
@@ -19,27 +20,19 @@ class SubclassIdeHelperCommands extends DrushCommands {
   const DEFAULT_FILENAME = '_ide_helper_subclassed_bundles.php';
 
   /**
-   * Constructs a new SubclassIdeHelperCommands object.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entityTypeBundleInfo
-   *   The entity type bundle info.
-   * @param \Drupal\Core\File\FileSystemInterface $fileSystem
-   *   The file handler.
-   * @param \Drupal\Core\TypedData\TypedDataManagerInterface $typedDataManager
-   *   The typed configuration manager.
-   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
-   *   The entity field manager.
+   * Class constructor.
    */
   public function __construct(
     protected EntityTypeBundleInfoInterface $entityTypeBundleInfo,
     protected FileSystemInterface $fileSystem,
     protected TypedDataManagerInterface $typedDataManager,
     protected EntityFieldManagerInterface $entityFieldManager,
+    protected Environment $twig
   ) {
   }
 
   /**
-   * Get field properties docblock.
+   * Generate class properties file.
    *
    * @command subclass_ide_helper:generate
    * @aliases sih
@@ -48,55 +41,19 @@ class SubclassIdeHelperCommands extends DrushCommands {
     $entity_types = 'node',
     $options = ['result-file' => NULL]
   ): void {
-    $output = $this->initialOutput();
+    $properties = $this->generateFieldProperties($entity_types);
 
-    $output .= $this->generateFieldProperties($entity_types);
+    // Render directly with twig to prevent debug html comments.
+    $output = $this->twig->loadTemplate('subclass-ide-helper.html.twig')->render(['namespaces' => $properties]);
 
-    $this->writeFile($output, $options['result-file']);
-  }
-
-  /**
-   * Adds the file scaffolding.
-   */
-  protected function initialOutput(): string {
-    return <<<EOF
-    <?php
-
-    // phpcs:ignoreFile
-
-    /**
-     * A helper file for node bundle classes.
-     */
-
-
-    EOF;
-  }
-
-  /**
-   * Adds a line to the output.
-   *
-   * Indentation and trailing blank lines can be specified.
-   */
-  protected function addLine(string $content, ?int $extra_blank_lines = 0, ?int $indentation = 0): string {
-    $output = '';
-    for ($i = 0; $i < $indentation; $i++) {
-      $output .= ' ';
-    }
-
-    $output .= "{$content}\n";
-
-    for ($i = 0; $i < $extra_blank_lines; $i++) {
-      $output .= "\n";
-    }
-
-    return $output;
+    $this->writeFile((string) $output, $options['result-file']);
   }
 
   /**
    * Generate the field properties for each subclassed bundle.
    */
-  protected function generateFieldProperties(string $entity_types): string {
-    $output = '';
+  protected function generateFieldProperties(string $entity_types): array {
+    $namespaces = [];
     foreach ($this->splitEntityTypes($entity_types) as $entity_type) {
       $bundles = $this->entityTypeBundleInfo->getBundleInfo($entity_type);
       foreach ($bundles as $bundle_name => $bundle) {
@@ -107,8 +64,6 @@ class SubclassIdeHelperCommands extends DrushCommands {
         $class_array = explode('\\', $bundle['class']);
         $class_name = array_pop($class_array);
         $namespace = implode('\\', $class_array);
-        $output .= $this->addLine("namespace {$namespace} {", 1);
-        $output .= $this->addLine('/**', 0, 2);
 
         $field_definitions = $this->entityFieldManager->getFieldDefinitions($entity_type, $bundle_name);
         foreach ($field_definitions as $key => $field_definition) {
@@ -123,14 +78,11 @@ class SubclassIdeHelperCommands extends DrushCommands {
 
           $field_class = get_class($this->typedDataManager->create($field_definition));
           $field_name = '$' . $key;
-          $output .= $this->addLine("* @property \\{$field_class}{$null} {$field_name} {$field_definition->label()}", 0, 3);
+          $namespaces[$namespace][$class_name][] = "\\{$field_class}{$null} {$field_name} {$field_definition->label()}";
         }
-        $output .= $this->addLine('*/', 0, 3);
-        $output .= $this->addLine("class {$class_name} {}", 1, 2);
-        $output .= $this->addLine('}', 1);
       }
     }
-    return $output;
+    return $namespaces;
   }
 
   /**
@@ -138,7 +90,7 @@ class SubclassIdeHelperCommands extends DrushCommands {
    */
   protected function splitEntityTypes(string $entity_types_string): array {
     return array_map(
-      fn (string $entity_type) => trim($entity_type),
+      'trim',
       explode(',', $entity_types_string)
     );
   }

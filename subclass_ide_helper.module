@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for subclass_ide_helper module.
+ */
+
+/**
+ * Implements hook_theme().
+ */
+function subclass_ide_helper_theme(array $existing, string $type, string $theme, string $path): array {
+  return [
+    'subclass_ide_helper' => [
+      'variables' => [
+        'namespaces' => [],
+      ],
+    ],
+  ];
+}

@@ -1,0 +1,22 @@
+<?php
+
+// phpcs:ignoreFile
+
+/**
+* A helper file for entity bundle classes.
+*/
+
+{% for namespace, classes in namespaces %}
+namespace {{ namespace }} {
+
+{% for class, properties in classes %}
+  /**
+{% for property in properties %}
+   * @property {{ property }}
+{% endfor %}
+  */
+  class {{ class }} {}
+
+{% endfor %}
+}
+{% endfor %}
