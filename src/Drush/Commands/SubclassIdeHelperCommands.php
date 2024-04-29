@@ -1,42 +1,43 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
-namespace Drupal\subclass_ide_helper\Commands;
+namespace Drupal\subclass_ide_helper\Drush\Commands;
 
+use Drupal\Core\DependencyInjection\AutowireTrait;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\TypedData\TypedDataManagerInterface;
 use Drupal\field\FieldConfigInterface;
+use Drush\Attributes\Command;
 use Drush\Commands\DrushCommands;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Twig\Environment;
 
 /**
- * A Drush commandfile.
+ * Subclass IDE Helper command file.
  */
 class SubclassIdeHelperCommands extends DrushCommands {
 
+  use AutowireTrait;
+
   const DEFAULT_FILENAME = '_ide_helper_subclassed_bundles.php';
 
-  /**
-   * Class constructor.
-   */
   public function __construct(
     protected EntityTypeBundleInfoInterface $entityTypeBundleInfo,
     protected FileSystemInterface $fileSystem,
     protected TypedDataManagerInterface $typedDataManager,
     protected EntityFieldManagerInterface $entityFieldManager,
-    protected Environment $twig
+    #[Autowire('twig')]
+    protected Environment $twig,
   ) {
   }
 
   /**
    * Generate class properties file.
-   *
-   * @command subclass_ide_helper:generate
-   * @aliases sih
    */
+  #[Command(name: 'subclass_ide_helper:generate', aliases: ['sih'])]
   public function generateBundleProperties(
     $entity_types = 'node',
     $options = [
@@ -50,7 +51,7 @@ class SubclassIdeHelperCommands extends DrushCommands {
     );
 
     // Render directly with twig to prevent debug html comments.
-    $output = $this->twig->loadTemplate('subclass-ide-helper.html.twig')->render(['namespaces' => $properties]);
+    $output = $this->twig->load('subclass-ide-helper.html.twig')->render(['namespaces' => $properties]);
 
     $this->writeFile((string) $output, $options['result-file']);
   }
