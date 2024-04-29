@@ -24,6 +24,14 @@ class SubclassIdeHelperCommands extends DrushCommands {
 
   const DEFAULT_FILENAME = '_ide_helper_subclassed_bundles.php';
 
+  /**
+   * Default options.
+   */
+  const OPTIONS = [
+    'result-file' => NULL,
+    'excluded-classes' => '',
+  ];
+
   public function __construct(
     protected EntityTypeBundleInfoInterface $entityTypeBundleInfo,
     protected FileSystemInterface $fileSystem,
@@ -38,13 +46,7 @@ class SubclassIdeHelperCommands extends DrushCommands {
    * Generate class properties file.
    */
   #[Command(name: 'subclass_ide_helper:generate', aliases: ['sih'])]
-  public function generateBundleProperties(
-    $entity_types = 'node',
-    $options = [
-      'result-file' => NULL,
-      'excluded-classes' => '',
-    ]
-  ): void {
+  public function generateBundleProperties(string $entity_types = 'node', array $options = self::OPTIONS): void {
     $properties = $this->generateFieldProperties(
       $this->splitString($entity_types),
       $this->splitString($options['excluded-classes']),
@@ -116,7 +118,7 @@ class SubclassIdeHelperCommands extends DrushCommands {
       $this->io()->success("Successfully saved file '{$filepath}'.");
     }
     catch (\Exception $e) {
-      $this->io()->error("There was an error saving file '{$filepath}'.");
+      $this->io()->error("There was an error saving file '{$filepath}': {$e->getMessage()}.");
     }
   }
 
